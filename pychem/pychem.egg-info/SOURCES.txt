@@ -1,0 +1,7 @@
+flchem.pyx
+pyproject.toml
+setup.py
+pychem.egg-info/PKG-INFO
+pychem.egg-info/SOURCES.txt
+pychem.egg-info/dependency_links.txt
+pychem.egg-info/top_level.txt
