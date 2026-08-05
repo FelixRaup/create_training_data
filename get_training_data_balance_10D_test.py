@@ -23,7 +23,8 @@ from sklearn.preprocessing import StandardScaler
 N = int(1e5)
 stand_scaler = True
 include_existing_sample = True
-training_folder = "data_hist_balanced_10D_new"
+training_folder = "data_hist_balanced_10D_largetimes" # "data_hist_balanced_10D_longtime"
+training_folder = "data_hist_balanced_10D_nolims_3"
 input_size = 10
 save_physical = True
 plot = True
@@ -59,13 +60,14 @@ param_ranges = {
     "abh2": (1e-10, 0.5),
     "abhp": (1e-15, 1),
     "abco": (1e-21, abundc),
-    "time": (0.1 * kyr, 20 * kyr)
+#    "time": (0.1 * kyr, 20 * kyr)
+    "time": (1e1 * kyr, 1e4 * kyr)
     }
 
 
 param_log_scales = {
-    "fshield_H2": True,
-    "fshield_CO": True,
+    "fshield_H2": False,
+    "fshield_CO": False,
     "AV_mean": True,
     "chi_mean": False,
     "dens": True,
@@ -76,22 +78,8 @@ param_log_scales = {
     "time": False,
     }
 
-# param_alphas = {
-#     "fshield_H2": 0.1,
-#     "fshield_CO": 0.1,
-#     "AV_mean": 1,
-#     "chi_mean": 0,
-#     "dens": 1,
-#     "eint": 1,
-#     "abh2": 0.1,
-#     "abhp": 1,
-#     "abco": 0.1,
-#     "time": 1,
-#     }
-
 
 ### ------------------------------------------------ ### 
-
 
 
 if not os.path.exists(training_folder):
@@ -106,44 +94,6 @@ def get_random_arr(range = (1,10), N=int(1e3), log=True):
         return np.random.uniform(range[0], range[1], N)
     
 
-# def get_random_arr_log_uniform(range=(1, 10), N=int(1e3), alpha=1.0):
-#     """
-#     alpha=0.0 → purely linear
-#     alpha=1.0 → purely logarithmic
-#     """
-#     u = np.random.uniform(0, 1, N)  # single draw
-
-#     # Linear and log mappings of the same u
-#     linear = range[0] + u * (range[1] - range[0])
-#     log    = range[0] * (range[1] / range[0]) ** u
-
-#     # alpha in log space
-#     return np.exp((1 - alpha) * np.log(linear) + alpha * np.log(log))
-
-# def get_variable_base_samples(range_val=(1, 10), N=1000, b=10.0):
-#     """
-#     Forward Function: Generates samples using a specific log-base 'b'.
-#     b > 1: Clustered towards the lower bound (like alpha > 0)
-#     """
-#     u = np.random.uniform(0, 1, N)
-#     r0, r1 = range_val
-    
-#     # Scale u using the variable base b
-#     return r0 + (r1 - r0) * (b**u - 1) / (b - 1)
-
-# def invert_variable_base(x, range_val=(1, 10), b=10.0):
-#     """
-#     Inverse Function: Instantly maps physical values (x) back to 
-#     the uniform latent space [0, 1] using the variable base 'b'.
-#     """
-#     r0, r1 = range_val
-    
-#     # Pure algebraic inversion (vectorized for speed)
-#     numerator = np.log(1 + ((x - r0) / (r1 - r0)) * (b - 1))
-#     denominator = np.log(b)
-    
-#     return numerator / denominator
-    
 
 
 
@@ -243,36 +193,16 @@ def get_random_config(param_ranges, log_scales):
     return X_phys[hydrogen_mask]
 
 
-def get_random_config_log_uniform(param_ranges, param_alphas):
-
-    X_phys = np.zeros((N, input_size), dtype=np.float64)
-
-    X_phys[:, 0] = get_random_arr_log_uniform(param_ranges["fshield_H2"], N, param_alphas["fshield_H2"])
-    X_phys[:, 1] = get_random_arr_log_uniform(param_ranges["fshield_CO"], N, param_alphas["fshield_CO"])
-    X_phys[:, 2] = get_random_arr_log_uniform(param_ranges["AV_mean"], N, param_alphas["AV_mean"])
-    X_phys[:, 3] = get_random_arr_log_uniform(param_ranges["chi_mean"], N, param_alphas["chi_mean"])
-    X_phys[:, 4] = get_random_arr_log_uniform(param_ranges["dens"], N, param_alphas["dens"])
-    X_phys[:, 5] = get_random_arr_log_uniform(param_ranges["eint"], N, param_alphas["eint"])
-    X_phys[:, 6] = get_random_arr_log_uniform(param_ranges["abh2"], N, param_alphas["abh2"])
-    X_phys[:, 7] = get_random_arr_log_uniform(param_ranges["abhp"], N, param_alphas["abhp"])
-    X_phys[:, 8] = get_random_arr_log_uniform(param_ranges["abco"], N, param_alphas["abco"])
-    X_phys[:, 9] = get_random_arr_log_uniform(param_ranges["time"], N, param_alphas["time"])
-
-    hydrogen_mask = (2 * X_phys[:, 6] + X_phys[:, 7] < 1 ) # filter for total hydrogen > 1
-    print(N - hydrogen_mask.sum())
-
-    return X_phys[hydrogen_mask]
-
 
 def PychemDataGenerator(X_phys): # X_phys = (10 x N) array
 
 
     if __name__ == '__main__':
 
-        try:
-            set_start_method('fork')
-        except RuntimeError:
-            pass
+        # try:
+        #     set_start_method('fork')
+        # except RuntimeError:
+        #     pass
 
         freeze_support()
 
@@ -300,8 +230,6 @@ def PychemDataGenerator(X_phys): # X_phys = (10 x N) array
 
         results = flchem_evolve_mp(*args)
 
-        print("RESULTS: ")
-        print(results)
 
         # Filtering
         solver_error = results[-3] != 999
@@ -393,11 +321,6 @@ y_physical_log[:,y_log_idx] = np.log10(y_physical[:,y_log_idx] + eps)
 y_physical_log[:, 0] = y_physical[:, 0]**0.2
 y_physical_log[:, 2] = y_physical[:, 2]**0.2
 
-### -------- SAVE POINTS WITH LOW HP ------------ ###
-
-# print("X_scaled shape: ", X_physical_log.shape)
-# X_physical_log_low_hp, y_physical_log_low_hp = X_physical_log[X_physical_log[:,1]<-10],  y_physical_log[y_physical_log[:,1]<-10]
-# print("X_scaled_low_hp shape: ", X_physical_log_low_hp.shape)
 
 ### -------------- BALANCE SAMPLE ------------------- ### 
 

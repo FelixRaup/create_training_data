@@ -1,1 +1,0 @@
-#define TR_RADIATIONPRESSURE
