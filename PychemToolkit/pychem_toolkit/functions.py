@@ -227,6 +227,39 @@ def balance_by_histogram(X, y, bins=50, target_count=500, min_threshold=50, max_
 
 
 
+# def transform(X, scaling):
+#     """
+#     Apply feature transformations.
+
+#     scaling:
+#         "linear"
+#         "log"
+#         "asinh"
+#         "power:<exponent>"  e.g. "power:0.2"
+#     """
+#     X = X.copy()
+
+#     for i, mode in enumerate(scaling.values()):
+
+#         if mode == "linear":
+#             continue
+
+#         elif mode == "log":
+#             X[:, i] = np.log10(X[:, i] + eps)
+        
+#         elif mode == "asinh": 
+#             X[:, i] = np.arcsinh(X[:, i])
+#             print(f"Transformed column {i} using asinh scaling.")
+
+#         elif mode.startswith("power:"):
+#             exponent = float(mode.split(":")[1])
+#             X[:, i] = X[:, i] ** exponent
+
+#         else:
+#             raise ValueError(f"Unknown scaling mode: {mode}")
+
+#     return X
+
 def transform(X, scaling):
     """
     Apply feature transformations.
@@ -234,7 +267,8 @@ def transform(X, scaling):
     scaling:
         "linear"
         "log"
-        "power:<exponent>"  e.g. "power:0.2"
+        "asinh:<scale>"
+        "power:<exponent>"
     """
     X = X.copy()
 
@@ -246,6 +280,10 @@ def transform(X, scaling):
         elif mode == "log":
             X[:, i] = np.log10(X[:, i] + eps)
 
+        elif mode.startswith("asinh:"):
+            scale = float(mode.split(":")[1])
+            X[:, i] = np.arcsinh(X[:, i] / scale)
+
         elif mode.startswith("power:"):
             exponent = float(mode.split(":")[1])
             X[:, i] = X[:, i] ** exponent
@@ -256,9 +294,42 @@ def transform(X, scaling):
     return X
 
 
+# def inverse_transform(X, scaling):
+#     """
+#     Reverse feature transformations.
+#     """
+#     X = X.copy()
+
+#     for i, mode in enumerate(scaling.values()):
+
+#         if mode == "linear":
+#             continue
+
+#         elif mode == "log":
+#             X[:, i] = 10 ** X[:, i] - eps
+
+#         elif mode == "asinh": 
+#             X[:, i] = np.sinh(X[:, i])
+
+#         elif mode.startswith("power:"):
+#             exponent = float(mode.split(":")[1])
+#             X[:, i] = X[:, i] ** (1 / exponent)
+
+#         else:
+#             raise ValueError(f"Unknown scaling mode: {mode}")
+
+#     return X
+
+
 def inverse_transform(X, scaling):
     """
     Reverse feature transformations.
+
+    scaling:
+        "linear"
+        "log"
+        "asinh:<scale>"
+        "power:<exponent>"
     """
     X = X.copy()
 
@@ -270,6 +341,10 @@ def inverse_transform(X, scaling):
         elif mode == "log":
             X[:, i] = 10 ** X[:, i] - eps
 
+        elif mode.startswith("asinh:"):
+            scale = float(mode.split(":")[1])
+            X[:, i] = scale * np.sinh(X[:, i])
+
         elif mode.startswith("power:"):
             exponent = float(mode.split(":")[1])
             X[:, i] = X[:, i] ** (1 / exponent)
@@ -278,6 +353,7 @@ def inverse_transform(X, scaling):
             raise ValueError(f"Unknown scaling mode: {mode}")
 
     return X
+
 
 
 def get_random_arr(value_range=(1, 10), N=1000, scaling="log"):
