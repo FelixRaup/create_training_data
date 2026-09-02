@@ -1,2 +1,4 @@
 /data
 /snapshots
+/scripts/__pycache__
+/pychem6.1/pychem/build

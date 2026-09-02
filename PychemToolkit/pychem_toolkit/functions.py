@@ -81,7 +81,7 @@ def get_config_from_snapshot(snapshot_folder, N):
     return np.vstack(X_phys)
 
 
-def pychem_data_generator(X_physical, filter_data, low_threshold): # X_phys = (10 x N) array
+def pychem_data_generator(X_physical, filter_data, abundance_thresholds, min_output_values, cut_1e40s): # X_phys = (10 x N) array
 
     # if __name__ == '__main__':
 
@@ -114,13 +114,23 @@ def pychem_data_generator(X_physical, filter_data, low_threshold): # X_phys = (1
     solver_error = results[-3] != 999
 
     num_zero = (results[1] == 1e-40) | (results[3] == 1e-40)
-    # low_abund = (results[1] < 1e-20) | (results[2] < 1e-20) | (results[3] < 1e-25)
-    low_abund = (results[1] < 1e-37) | (results[2] < 1e-37) | (results[3] < 1e-37) # ensure single precision
+    low_abund = (results[1] < abundance_thresholds[0]) | (results[2] < abundance_thresholds[1]) | (results[3] < abundance_thresholds[2]) # ensure single precision
 
-    if filter_data:
-        valid = (~solver_error) & (~low_abund) # & (~num_zero) 
-    else: 
-        valid = (~solver_error)
+
+    valid = (~solver_error)
+
+    if (filter_data == True):
+        valid = valid & (~low_abund)
+        print("abundances below threshold cutted out of sample")
+
+    # if (filter_data == True):
+    #     valid = (~solver_error) & (~low_abund) 
+    # else: 
+    #     valid = (~solver_error)
+
+    if (cut_1e40s == True):
+        valid = valid & (~num_zero)
+        print("1e-40 abundances cutted out of sample")
 
     num_valid = np.sum(valid)
 
@@ -141,13 +151,19 @@ def pychem_data_generator(X_physical, filter_data, low_threshold): # X_phys = (1
     y_out[:, 3] = results[6][valid] # dust temp
     y_out[:, 4] = results[7][valid] # internal energy
 
-    if not np.isnan(low_threshold):
-        y_out = np.maximum(y_out, low_threshold)
 
+    if not np.isnan(min_output_values[0]):
+        y_out[:, 0] = np.maximum(y_out[:, 0], min_output_values[0])
+        y_out[:, 1] = np.maximum(y_out[:, 1], min_output_values[1])
+        y_out[:, 2] = np.maximum(y_out[:, 2], min_output_values[2])
+        y_out[:, 3] = np.maximum(y_out[:, 3], min_output_values[3])
+        y_out[:, 4] = np.maximum(y_out[:, 4], min_output_values[4])
 
     # Combine all snapshots
 
     print(f"\nTotal training points: {X_out.shape[0]}")
+
+    print("TEST")
 
     return X_out, y_out
 

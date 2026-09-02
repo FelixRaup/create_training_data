@@ -22,91 +22,39 @@ from pychem_toolkit import get_random_config, transform, inverse_transform
 
 ### ------------- settings --------------------------- ###
 
-
 N = int(1e5)
 stand_scaler = True
 include_existing_sample = False
-training_folder = "../data/test" # "data_hist_balanced_10D_longtime"
+training_folder = "../data/data_hist_balanced_10D_test"
 input_size = 10
 save_physical = True
 plot = True
 
-balance = True
-target_count = 10000
-min_threshold = 2000
-
 consider_deltas = False
 
+
+### --- data generator settings ---------- ###
+
+from dataset_config_4 import input_range, input_scaling, output_scaling
+
+filter_data = False
+abundance_thresholds = [1e-12, 1e-15, 1e-21]
+# abundance_thresholds = [1e-40, 1e-40, 1e-40]
+# min_output_values = [np.nan]
+min_output_values = [1e-12, 1e-12, 1e-20, 1e-20, 1e-20]
+cut_1e40s = True
+
+
+### ------ data balancing settings ------- ###
+
+balance = True
+target_count = 100000
+min_threshold = 20000
+filter_dimensions = [0, 1, 2, 4]
 
 
 if not os.path.exists(training_folder):
     os.makedirs(training_folder)
-
-
-### ---------- constants for pychem ------------- ###
-
-kyr = 3.1556926e10
-
-# totaltime, timestep = 3.1556926e10, 3.1556926e10
-abundc, abundo = 1.4e-4, 3.2e-4
-dust_to_gas_ratio, dust_temp = 1e0, np.nan
-G0, cosmic_ray_ion_rate = 1.7, 3e-17
-NH_ext, Z_atom = 1e20, 1.
-dl, divv = 1e15, 0.
-abcp = np.nan
-G0RP = 0.0
-
-ch_muC = 12.011
-ch_mf_scale = 1.0 + abundc * ch_muC
-
-eps = 1e-40
-
-### ------- input parameter setting -------- ###
-
-from dataset_config_king import input_range, input_scaling, output_scaling
-
-# input_range = {
-#     "fshield_H2": (1e-10, 1),
-#     "fshield_CO": (1e-10, 1),
-#     "AV_mean": (1e-5, 1e3),
-#     "chi_mean": (1e-5, 1),
-#     "dens": (1e-26, 1e-16),
-#     "eint": (1e-15, 1e-6),
-#     "abh2": (1e-10, 0.5),
-#     "abhp": (1e-15, 1),
-#     "abco": (1e-21, abundc),
-#     "time": (0.1 * kyr, 100 * kyr)
-# }
-
-# input_scaling = {
-#     "fshield_H2": "power:0.2",
-#     "fshield_CO": "power:0.2",
-#     "AV_mean": "log",
-#     "chi_mean": "linear",
-#     "dens": "log",
-#     "eint": "log",
-#     "abh2": "power:0.2",
-#     "abhp": "log",
-#     "abco": "power:0.2",
-#     "time": "linear",
-# }
-
-# output_scaling = {
-#     "abh2": "power:0.2",
-#     "abhp": "log",
-#     "abco": "power:0.1", 
-#     "tdus": "linear",
-#     "eint": "log"
-# }
-
-# output_scaling = {
-#     "abh2": "asinh:1e-3",
-#     "abhp": "asinh:1e-10",
-#     "abco": "asinh:1e-7", 
-#     "tdus": "linear",
-#     "eint": "asinh:1e-10"
-# }
-
 
 
 
@@ -120,8 +68,11 @@ X_physical = get_random_config(
 
 X_physical, y_physical = pychem_data_generator(
     X_physical = X_physical, 
-    filter_data = False,
-    low_threshold = 1e-37)
+    filter_data = filter_data,
+    abundance_thresholds = abundance_thresholds,
+    min_output_values = min_output_values,
+    cut_1e40s = cut_1e40s,
+    )
 
 
 if consider_deltas:
@@ -129,15 +80,6 @@ if consider_deltas:
     y_physical[:, 1] = y_physical[:, 1] - X_physical[:, 7]  # abhp
     y_physical[:, 2] = y_physical[:, 2] - X_physical[:, 8]  # abco
     y_physical[:, 4] = y_physical[:, 4] - X_physical[:, 5]  # eint
-
-
-delta_eint = y_physical[:, 4]
-
-print(np.percentile(
-    np.abs(y_physical),
-    [1, 10, 25, 50, 75, 90, 99]
-))
-
 
 
 
@@ -178,7 +120,7 @@ y_scaled = transform(y_physical, output_scaling)
 ### -------------- BALANCE SAMPLE ------------------- ### 
 
 if balance:
-    X_scaled_balanced, y_scaled_balanced = balance_by_histogram(X_scaled, y_scaled, bins=50, target_count=target_count, min_threshold=min_threshold, dimensions=[0, 1, 2, 4])
+    X_scaled_balanced, y_scaled_balanced = balance_by_histogram(X_scaled, y_scaled, bins=50, target_count=target_count, min_threshold=min_threshold, dimensions=filter_dimensions)
 else:
     X_scaled_balanced, y_scaled_balanced = X_scaled, y_scaled
 

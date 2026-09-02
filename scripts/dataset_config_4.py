@@ -6,7 +6,7 @@ input_range = {
     "fshield_CO": (1e-10, 1),
     "AV_mean": (1e-2, 1e3),
     "chi_mean": (1e-5, 1),
-    "dens": (1e-26, 1e-16),
+    "dens": (1e-26, 1e-20),
     "eint": (1e-15, 1e-5),
     "abh2": (1e-10, 0.5),
     "abhp": (1e-15, 1),
@@ -24,13 +24,13 @@ input_scaling = {
     "abh2": "log",
     "abhp": "log",
     "abco": "log",
-    "time": "power:0.2",
+    "time": "linear",
 }
 
 output_scaling = {
-    "abh2": "power:0.2",
+    "abh2": "log",
     "abhp": "log",
-    "abco": "power:0.2",
+    "abco": "log",
     "tdus": "linear",
     "eint": "log",
 }

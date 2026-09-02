@@ -24,13 +24,13 @@ input_scaling = {
     "abh2": "log",
     "abhp": "log",
     "abco": "log",
-    "time": "power:0.2",
+    "time": "linear",
 }
 
 output_scaling = {
-    "abh2": "power:0.2",
+    "abh2": "log",
     "abhp": "log",
-    "abco": "power:0.2",
+    "abco": "log",
     "tdus": "linear",
     "eint": "log",
 }
