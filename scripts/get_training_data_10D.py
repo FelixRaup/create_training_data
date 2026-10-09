@@ -37,7 +37,7 @@ consider_deltas = False
 
 from dataset_config_4 import input_range, input_scaling, output_scaling
 
-filter_data = False
+filter_low_abundances = False
 abundance_thresholds = [1e-12, 1e-15, 1e-21]
 # abundance_thresholds = [1e-40, 1e-40, 1e-40]
 # min_output_values = [np.nan]
@@ -68,7 +68,7 @@ X_physical = get_random_config(
 
 X_physical, y_physical = pychem_data_generator(
     X_physical = X_physical, 
-    filter_data = filter_data,
+    filter_data = filter_low_abundances,
     abundance_thresholds = abundance_thresholds,
     min_output_values = min_output_values,
     cut_1e40s = cut_1e40s,

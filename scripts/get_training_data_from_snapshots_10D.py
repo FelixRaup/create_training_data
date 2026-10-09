@@ -39,6 +39,13 @@ consider_deltas = False
 
 snapshots_path = "../snapshots/"
 
+filter_low_abundances = False
+abundance_thresholds = [1e-12, 1e-15, 1e-21]
+# abundance_thresholds = [1e-40, 1e-40, 1e-40]
+# min_output_values = [np.nan]
+min_output_values = [1e-12, 1e-12, 1e-20, 1e-20, 1e-20]
+cut_1e40s = True
+
 if not os.path.exists(training_folder):
     os.makedirs(training_folder)
 
@@ -73,9 +80,12 @@ X_physical = get_config_from_snapshot(snapshots_path, N)
 
 X_physical, y_physical = pychem_data_generator(
     X_physical = X_physical, 
-    filter_data = False,
-    abundance_thresholds = [1e-10, 1e-15, 1e-21],
-    low_threshold = np.nan)
+    filter_low_abundances = filter_low_abundances,
+    abundance_thresholds = abundance_thresholds,
+    min_output_values = min_output_values,
+    cut_1e40s = cut_1e40s,
+    )
+
 if consider_deltas:
     y_physical[:, 0] = y_physical[:, 0] - X_physical[:, 6]  # abh2
     y_physical[:, 1] = y_physical[:, 1] - X_physical[:, 7]  # abhp
@@ -89,7 +99,6 @@ print(np.percentile(
     np.abs(y_physical),
     [1, 10, 25, 50, 75, 90, 99]
 ))
-
 
 
 
@@ -156,6 +165,37 @@ y_balanced = inverse_transform(
 # print(y_physical == y_balanced)
 
 # exit()
+
+
+data = X_physical
+
+quantity = [
+    "fshield_H2", "fshield_CO", "AV_mean", "chi_mean",
+    "dens", "eint", "abh2", "abhp", "abco", "time"
+]
+
+fig, axes = plt.subplots(
+    data.shape[1], 1,
+    figsize=(10, 20),
+    sharex=False
+)
+
+for i, ax in enumerate(axes):
+    ax.hist(np.log10(data[:, i]), bins=50, edgecolor="black")
+    ax.set_ylabel(quantity[i])
+    ax.grid(True, alpha=0.5)
+    ax.set_ylim(bottom=0)
+    
+    # x-Achse anzeigen
+    ax.tick_params(axis="x", labelbottom=True)
+    ax.set_xlabel(quantity[i])
+
+fig.suptitle("X physical", fontsize=16)
+
+plt.tight_layout()
+plt.show()
+
+
 
 if plot:
 
@@ -232,6 +272,7 @@ if plot:
 
 ### -------------- SAVE DATA ------------------------ ### 
 
+exit()
 
 
 np.savez_compressed(

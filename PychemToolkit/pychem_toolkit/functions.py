@@ -81,7 +81,7 @@ def get_config_from_snapshot(snapshot_folder, N):
     return np.vstack(X_phys)
 
 
-def pychem_data_generator(X_physical, filter_data, abundance_thresholds, min_output_values, cut_1e40s): # X_phys = (10 x N) array
+def pychem_data_generator(X_physical, filter_low_abundances, abundance_thresholds, min_output_values, cut_1e40s): # X_phys = (10 x N) array
 
     # if __name__ == '__main__':
 
@@ -119,14 +119,10 @@ def pychem_data_generator(X_physical, filter_data, abundance_thresholds, min_out
 
     valid = (~solver_error)
 
-    if (filter_data == True):
+    if (filter_low_abundances == True):
         valid = valid & (~low_abund)
         print("abundances below threshold cutted out of sample")
 
-    # if (filter_data == True):
-    #     valid = (~solver_error) & (~low_abund) 
-    # else: 
-    #     valid = (~solver_error)
 
     if (cut_1e40s == True):
         valid = valid & (~num_zero)
